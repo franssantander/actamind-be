@@ -1,0 +1,28 @@
+name: Mirror to Personal Repository
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "**"
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Mirror repository
+        env:
+          PERSONAL_REPO_TOKEN: ${{ secrets.PERSONAL_REPO_TOKEN }}
+        run: |
+          git remote add personal \
+            "https://x-access-token:${PERSONAL_REPO_TOKEN}@github.com/franssantander/actamind-be.git"
+
+          git push personal --mirror
