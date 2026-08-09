@@ -1,4 +1,4 @@
-name: Mirror to Personal Repository
+name: Mirror to Personal Repo
 
 on:
   push:
@@ -6,23 +6,40 @@ on:
       - "**"
     tags:
       - "**"
+  delete:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+concurrency:
+  group: mirror-to-personal
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   mirror:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
+      - name: Mirror-clone organization repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone --mirror \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            mirror-repo
 
-      - name: Mirror repository
+      - name: Push mirror to personal repository
         env:
           PERSONAL_REPO_TOKEN: ${{ secrets.PERSONAL_REPO_TOKEN }}
         run: |
-          git remote add personal \
-            "https://x-access-token:${PERSONAL_REPO_TOKEN}@github.com/franssantander/actamind-be.git"
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
 
-          git push personal --mirror
+          cd mirror-repo
+
+          git remote set-url origin \
+            "https://x-access-token:${PERSONAL_REPO_TOKEN}@github.com/franssantander/${REPO_NAME}.git"
+
+          git push --mirror
