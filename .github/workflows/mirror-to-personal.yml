@@ -40,6 +40,11 @@ jobs:
           git remote set-url origin \
             "https://x-access-token:${PERSONAL_REPO_TOKEN}@github.com/franssantander/${REPO_NAME}.git"
 
+          # git clone --mirror sets remote.origin.mirror = true, which makes
+          # `git push` behave as --mirror even with explicit refspecs (and
+          # git refuses to combine the two). Clear it before pushing.
+          git config --unset remote.origin.mirror
+
           # Push only branches and tags, force-updating and pruning ones
           # that no longer exist upstream. Deliberately NOT using --mirror:
           # that also tries to push GitHub's hidden refs/pull/* refs,
