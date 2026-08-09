@@ -3,13 +3,13 @@ name: Mirror to Personal Repo
 on:
   push:
     branches:
-      - "**"
+      - '**'
     tags:
-      - "**"
+      - '**'
   delete:
   workflow_dispatch:
   schedule:
-    - cron: "17 3 * * *"
+    - cron: '17 3 * * *'  # daily safety-net full resync
 
 concurrency:
   group: mirror-to-personal
@@ -21,25 +21,27 @@ permissions:
 jobs:
   mirror:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Mirror-clone organization repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Mirror-clone this repository
         run: |
           git clone --mirror \
-            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
             mirror-repo
 
-      - name: Push mirror to personal repository
+      - name: Push branches and tags to personal repo
         env:
           PERSONAL_REPO_TOKEN: ${{ secrets.PERSONAL_REPO_TOKEN }}
         run: |
+          # Destination defaults to the same repo name under franssantander.
+          # Change REPO_NAME below if the personal repo uses a different name.
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
 
           cd mirror-repo
-
           git remote set-url origin \
             "https://x-access-token:${PERSONAL_REPO_TOKEN}@github.com/franssantander/${REPO_NAME}.git"
 
-          git push --mirror
+          # Push only branches and tags, force-updating and pruning ones
+          # that no longer exist upstream. Deliberately NOT using --mirror:
+          # that also tries to push GitHub's hidden refs/pull/* refs,
+          # which GitHub always rejects on the destination.
+          git push origin --prune '+refs/heads/*:refs/heads/*' '+refs/tags/*:refs/tags/*'
