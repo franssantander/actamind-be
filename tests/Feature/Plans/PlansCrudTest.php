@@ -29,14 +29,14 @@ function validPlanPayload(array $overrides = []): array
 test('index returns a paginated list of plans', function () {
     Plan::factory()->count(3)->create();
 
-    $response = $this->getJson('/api/v1/plans');
+    $response = $this->getJson(route('plans.index'));
 
     $response->assertOk();
     expect($response->json('data.data'))->toHaveCount(3);
 });
 
 test('store creates a plan with a generated uuid', function () {
-    $response = $this->postJson('/api/v1/plans', validPlanPayload());
+    $response = $this->postJson(route('plans.store'), validPlanPayload());
 
     $response->assertCreated();
     expect($response->json('data.uuid'))->not->toBeNull();
@@ -46,7 +46,7 @@ test('store creates a plan with a generated uuid', function () {
 test('store rejects a duplicate slug', function () {
     Plan::factory()->create(['slug' => 'pro']);
 
-    $response = $this->postJson('/api/v1/plans', validPlanPayload());
+    $response = $this->postJson(route('plans.store'), validPlanPayload());
 
     $response->assertStatus(422);
 });
@@ -54,7 +54,7 @@ test('store rejects a duplicate slug', function () {
 test('uuid cannot be set via mass assignment on store', function () {
     $spoofedUuid = '11111111-1111-1111-1111-111111111111';
 
-    $response = $this->postJson('/api/v1/plans', validPlanPayload(['uuid' => $spoofedUuid]));
+    $response = $this->postJson(route('plans.store'), validPlanPayload(['uuid' => $spoofedUuid]));
 
     $response->assertCreated();
     expect($response->json('data.uuid'))->not->toBe($spoofedUuid);
@@ -63,7 +63,7 @@ test('uuid cannot be set via mass assignment on store', function () {
 test('show returns a plan by uuid', function () {
     $plan = Plan::factory()->create();
 
-    $response = $this->getJson("/api/v1/plans/{$plan->uuid}");
+    $response = $this->getJson(route('plans.show', $plan->uuid));
 
     $response->assertOk();
     expect($response->json('data.uuid'))->toBe($plan->uuid);
@@ -72,33 +72,33 @@ test('show returns a plan by uuid', function () {
 test('show returns 404 for the numeric id', function () {
     $plan = Plan::factory()->create();
 
-    $response = $this->getJson("/api/v1/plans/{$plan->id}");
+    $response = $this->getJson(route('plans.show', $plan->id));
 
     $response->assertNotFound();
 });
 
 test('show returns 404 for a random uuid', function () {
-    $response = $this->getJson('/api/v1/plans/'.Str::uuid());
+    $response = $this->getJson(route('plans.show', Str::uuid()));
 
     $response->assertNotFound();
 });
 
 test('show returns 404 for a non-uuid path segment', function () {
-    $this->getJson('/api/v1/plans/not-a-uuid')->assertNotFound();
+    $this->getJson(route('plans.show', 'not-a-uuid'))->assertNotFound();
 });
 
 test('update returns 404 for a non-uuid path segment', function () {
-    $this->patchJson('/api/v1/plans/not-a-uuid', ['name' => 'Updated'])->assertNotFound();
+    $this->patchJson(route('plans.update', 'not-a-uuid'), ['name' => 'Updated'])->assertNotFound();
 });
 
 test('destroy returns 404 for a non-uuid path segment', function () {
-    $this->deleteJson('/api/v1/plans/not-a-uuid')->assertNotFound();
+    $this->deleteJson(route('plans.destroy', 'not-a-uuid'))->assertNotFound();
 });
 
 test('update applies a partial change', function () {
     $plan = Plan::factory()->create(['name' => 'Original']);
 
-    $response = $this->patchJson("/api/v1/plans/{$plan->uuid}", ['name' => 'Updated']);
+    $response = $this->patchJson(route('plans.update', $plan->uuid), ['name' => 'Updated']);
 
     $response->assertOk();
     expect($response->json('data.name'))->toBe('Updated');
@@ -108,7 +108,7 @@ test('update applies a partial change', function () {
 test('update applies a full replacement', function () {
     $plan = Plan::factory()->create(['slug' => 'free']);
 
-    $response = $this->putJson("/api/v1/plans/{$plan->uuid}", validPlanPayload(['slug' => 'free']));
+    $response = $this->putJson(route('plans.update', $plan->uuid), validPlanPayload(['slug' => 'free']));
 
     $response->assertOk();
     expect($response->json('data.name'))->toBe('Pro');
@@ -117,20 +117,20 @@ test('update applies a full replacement', function () {
 test('destroy removes the plan', function () {
     $plan = Plan::factory()->create();
 
-    $this->deleteJson("/api/v1/plans/{$plan->uuid}")->assertOk();
+    $this->deleteJson(route('plans.destroy', $plan->uuid))->assertOk();
 
-    $this->getJson("/api/v1/plans/{$plan->uuid}")->assertNotFound();
+    $this->getJson(route('plans.show', $plan->uuid))->assertNotFound();
     $this->assertSoftDeleted('plans', ['id' => $plan->id]);
 });
 
 test('update shifts other plans to keep sort_order sequential', function () {
     $plans = collect(range(1, 4))->map(
-        fn (int $position) => Plan::factory()->create(['sort_order' => $position])
+        fn(int $position) => Plan::factory()->create(['sort_order' => $position])
     );
 
     $moved = $plans->firstWhere('sort_order', 4);
 
-    $this->patchJson("/api/v1/plans/{$moved->uuid}", ['sort_order' => 2])->assertOk();
+    $this->patchJson(route('plans.update', $moved->uuid), ['sort_order' => 2])->assertOk();
 
     $ordered = Plan::query()->orderBy('sort_order')->get(['id', 'sort_order']);
 
@@ -140,12 +140,12 @@ test('update shifts other plans to keep sort_order sequential', function () {
 
 test('update clamps an out-of-range sort_order to the last position', function () {
     $plans = collect(range(1, 3))->map(
-        fn (int $position) => Plan::factory()->create(['sort_order' => $position])
+        fn(int $position) => Plan::factory()->create(['sort_order' => $position])
     );
 
     $first = $plans->firstWhere('sort_order', 1);
 
-    $response = $this->patchJson("/api/v1/plans/{$first->uuid}", ['sort_order' => 99]);
+    $response = $this->patchJson(route('plans.update', $first->uuid), ['sort_order' => 99]);
 
     $response->assertOk();
     expect($response->json('data.sort_order'))->toBe(3);
