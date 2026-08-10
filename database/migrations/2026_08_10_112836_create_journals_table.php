@@ -16,7 +16,7 @@ return new class extends Migration
             //TODO: $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->uuid()->unique();
             $table->string('title');
-            $table->longText('content')->nullable();
+            $table->longText('content')->nullable()->default('');
 
             $table->softDeletes();
             $table->timestamps();
