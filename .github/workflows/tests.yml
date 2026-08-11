@@ -3,8 +3,9 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - main
       - '*.x'
+      - 'feature/**'
   pull_request:
   schedule:
     - cron: '0 0 * * *'
@@ -19,9 +20,24 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.3, 8.4, 8.5]
+        php: [ 8.3, 8.4, 8.5 ]
 
     name: PHP ${{ matrix.php }}
+
+    services:
+      pgsql:
+        image: postgres:17
+        env:
+          POSTGRES_DB: actamind-test
+          POSTGRES_USER: actamind
+          POSTGRES_PASSWORD: actamind_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U actamind"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     steps:
       - name: Checkout code
@@ -31,7 +47,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_pgsql, pgsql
           coverage: none
 
       - name: Install Composer dependencies
@@ -42,6 +58,15 @@ jobs:
 
       - name: Generate app key
         run: php artisan key:generate
+
+      - name: Patch environment for CI
+        run: |
+          echo "DB_CONNECTION=pgsql"              >> .env
+          echo "DB_HOST=127.0.0.1"                >> .env
+          echo "DB_PORT=5432"                     >> .env
+          echo "DB_DATABASE=actamind-test"        >> .env
+          echo "DB_USERNAME=actamind"             >> .env
+          echo "DB_PASSWORD=actamind_password"    >> .env
 
       - name: Execute tests
         run: php artisan test
