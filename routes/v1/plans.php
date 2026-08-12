@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\PlansController;
+use App\Http\Controllers\PlanController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('plans')
     ->name('plans.')
-    ->controller(PlansController::class)
+    ->controller(PlanController::class)
     ->group(function () {
         Route::get('/', 'index')->name('index');
         Route::post('/', 'store')->name('store');

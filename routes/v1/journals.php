@@ -3,8 +3,8 @@
 use App\Http\Controllers\JournalController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('journal')
-    ->name('journal.')
+Route::prefix('journals')
+    ->name('journals.')
     ->controller(JournalController::class)
     ->group(function () {
         Route::get('/', 'index')->name('index');

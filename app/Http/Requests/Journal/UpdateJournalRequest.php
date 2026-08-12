@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Journals;
+namespace App\Http\Requests\Journal;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreJournalRequest extends FormRequest
+class UpdateJournalRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,8 +23,8 @@ class StoreJournalRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string'],
-            'content' => ['nullable', 'string']
+            'title' => ['sometimes', 'string'],
+            'content' => ['sometimes', 'string']
         ];
     }
 }

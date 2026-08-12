@@ -10,7 +10,7 @@ class JournalData extends Data
         public int $id,
         public string $uuid,
         public string $title,
-        public string $content,
+        public ?string $content,
         public ?string $created_at,
         public ?string $updated_at
     ) {}

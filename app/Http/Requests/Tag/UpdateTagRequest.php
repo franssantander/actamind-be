@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Journals;
+namespace App\Http\Requests\Tag;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateJournalRequest extends FormRequest
+class UpdateTagRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,8 +23,7 @@ class UpdateJournalRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['sometimes', 'string'],
-            'content' => ['sometimes', 'string']
+            'label' => ['sometimes', 'string', 'max:50']
         ];
     }
 }

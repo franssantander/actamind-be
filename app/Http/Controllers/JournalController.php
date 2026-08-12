@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Data\Journals\JournalData;
-use App\Http\Requests\Journals\StoreJournalRequest;
+use App\Http\Requests\Journal\StoreJournalRequest;
+use App\Http\Requests\Journal\UpdateJournalRequest;
 use App\Models\Journal;
-use Illuminate\Http\Request;
 
 class JournalController extends Controller
 {
@@ -56,7 +56,7 @@ class JournalController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(StoreJournalRequest $request, Journal $journal)
+    public function update(UpdateJournalRequest $request, Journal $journal)
     {
         $journal->update($request->validated());
 
@@ -69,6 +69,7 @@ class JournalController extends Controller
     public function destroy(Journal $journal)
     {
         $journal->delete();
+        
         return $this->success(null, 'Journal deleted successfully.');
     }
 }

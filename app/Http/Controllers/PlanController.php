@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Data\Plans\PlanData;
-use App\Http\Requests\Plans\StorePlanRequest;
-use App\Http\Requests\Plans\UpdatePlanRequest;
+use App\Http\Requests\Plan\StorePlanRequest;
+use App\Http\Requests\Plan\UpdatePlanRequest;
 use App\Models\Plan;
 use App\Services\Plans\PlanService;
 use Spatie\LaravelData\PaginatedDataCollection;
 
-class PlansController extends Controller
+class PlanController extends Controller
 {
     public function __construct(private readonly PlanService $planService) {}
 
